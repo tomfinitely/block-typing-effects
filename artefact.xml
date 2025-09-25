@@ -1,0 +1,919 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<artefact xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="artefact.xsd" name="Typing Effects" slug="typing-effects" type="code-package" schemaVersion="2">
+  <file path="readme.txt">
+    <content><![CDATA[
+=== Typing Effects ===
+
+Contributors:      WordPress Telex
+Tags:              block, typing, animation, typewriter, matrix, effects
+Tested up to:      6.8
+Stable tag:        0.1.0
+License:           GPLv2 or later
+License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+
+Create engaging typing animations with typewriter, Matrix-style, and hybrid effects.
+
+== Description ==
+
+The Typing Effects block brings your text to life with three distinct animation styles:
+
+* **Typewriter Effect**: Classic character-by-character typing animation with a blinking cursor
+* **Matrix Shuffle**: Each character randomly shuffles through different letters before settling on the final character
+* **Hybrid Mode**: Combines both effects for a unique typing experience with character shuffling
+
+Perfect for:
+- Landing pages and hero sections
+- Code demonstrations and terminal simulations
+- Creative storytelling and engaging content
+- Adding dynamic elements to static text
+
+The block includes customizable settings for typing speed, animation delays, and styling options to match your site's design.
+
+== Installation ==
+
+1. Upload the plugin files to the `/wp-content/plugins/typing-effects` directory, or install the plugin through the WordPress plugins screen directly.
+1. Activate the plugin through the 'Plugins' screen in WordPress
+1. Add the "Typing Effects" block to any post or page
+1. Enter your text and choose your preferred animation style
+
+== Frequently Asked Questions ==
+
+= Can I customize the typing speed? =
+
+Yes! The block includes speed controls in the inspector panel where you can adjust both the typing speed and shuffle animation speed.
+
+= Does it work on mobile devices? =
+
+Absolutely! The animations are optimized to work smoothly across all devices and screen sizes.
+
+= Can I use HTML in the text? =
+
+The block supports rich text formatting including bold, italic, links, and other basic HTML elements.
+
+== Screenshots ==
+
+1. The block editor interface showing the typing effects options
+2. Typewriter effect in action on the frontend
+3. Matrix shuffle effect demonstration
+
+== Changelog ==
+
+= 0.1.0 =
+* Initial release with typewriter, Matrix shuffle, and hybrid effects
+* Customizable speed controls
+* Rich text support
+* Mobile-optimized animations
+
+== Features ==
+
+* Three distinct animation modes
+* Adjustable typing and shuffle speeds
+* Rich text formatting support
+* Responsive design
+* Lightweight and performant
+* Easy-to-use interface
+]]></content>
+  </file>
+  <file path="typing-effects.php">
+    <content><![CDATA[<?php
+/**
+ * Plugin Name:       Typing Effects
+ * Description:       Create engaging typing animations with typewriter, Matrix-style, and hybrid effects.
+ * Version:           0.1.0
+ * Requires at least: 6.1
+ * Requires PHP:      7.0
+ * Author:            WordPress Telex
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       typing-effects
+ *
+ * @package TypingEffects
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+/**
+ * Registers the block using the metadata loaded from the `block.json` file.
+ * Behind the scenes, it registers also all assets so they can be enqueued
+ * through the block editor in the corresponding context.
+ *
+ * @see https://developer.wordpress.org/reference/functions/register_block_type/
+ */
+function typing_effects_typing_effects_block_init() {
+	register_block_type( __DIR__ . '/build/' );
+}
+add_action( 'init', 'typing_effects_typing_effects_block_init' );
+	]]></content>
+  </file>
+  <file path="src/block.json">
+    <content><![CDATA[{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "telex/block-typing-effects",
+	"version": "0.1.0",
+	"title": "Typing Effects",
+	"category": "design",
+	"icon": "editor-code",
+	"description": "Add engaging typing animations with typewriter, Matrix-style, and hybrid effects to your content blocks.",
+	"example": {
+		"attributes": {
+			"effect": "typewriter",
+			"typingSpeed": 50
+		},
+		"innerBlocks": [
+			{
+				"name": "core/paragraph",
+				"attributes": {
+					"content": "Hello World! This text will animate with typing effects."
+				}
+			}
+		]
+	},
+	"attributes": {
+		"effect": {
+			"type": "string",
+			"default": "typewriter",
+			"enum": ["typewriter", "matrix", "hybrid"]
+		},
+		"typingSpeed": {
+			"type": "number",
+			"default": 50
+		},
+		"shuffleSpeed": {
+			"type": "number",
+			"default": 30
+		},
+		"startDelay": {
+			"type": "number",
+			"default": 500
+		},
+		"showCursor": {
+			"type": "boolean",
+			"default": true
+		},
+		"cursorChar": {
+			"type": "string",
+			"default": "|"
+		}
+	},
+	"supports": {
+		"html": false,
+		"color": {
+			"text": true,
+			"background": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"fontFamily": true,
+			"fontStyle": true,
+			"fontWeight": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"textdomain": "typing-effects",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}]]></content>
+  </file>
+  <file path="src/index.js">
+    <content><![CDATA[/**
+ * Registers a new block provided a unique name and an object defining its behavior.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+import { registerBlockType } from '@wordpress/blocks';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * All files containing `style` keyword are bundled together. The code used
+ * gets applied both to the front of your site and to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './style.scss';
+
+/**
+ * Internal dependencies
+ */
+import Edit from './edit';
+import save from './save';
+import metadata from './block.json';
+
+/**
+ * Every block starts by registering a new block type definition.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+registerBlockType( metadata.name, {
+	/**
+	 * @see ./edit.js
+	 */
+	edit: Edit,
+
+	/**
+	 * @see ./save.js
+	 */
+	save,
+} );]]></content>
+  </file>
+  <file path="src/edit.js">
+    <content><![CDATA[/**
+ * Retrieves the translation of text.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * React hook that is used to mark the block wrapper element.
+ * It provides all the necessary props like the class name.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
+ */
+import { useBlockProps, InspectorControls, InnerBlocks } from '@wordpress/block-editor';
+import { PanelBody, SelectControl, RangeControl, ToggleControl, TextControl } from '@wordpress/components';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * Those files can contain any CSS code that gets applied to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './editor.scss';
+
+/**
+ * The edit function describes the structure of your block in the context of the
+ * editor. This represents what the editor will render when the block is used.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
+ *
+ * @return {Element} Element to render.
+ */
+export default function Edit( { attributes, setAttributes } ) {
+	const { 
+		effect, 
+		typingSpeed, 
+		shuffleSpeed, 
+		startDelay, 
+		showCursor, 
+		cursorChar 
+	} = attributes;
+
+	const blockProps = useBlockProps( {
+		className: `typing-effects-block effect-${effect}`
+	} );
+
+	const effectOptions = [
+		{ label: __( 'Typewriter', 'typing-effects' ), value: 'typewriter' },
+		{ label: __( 'Matrix Shuffle', 'typing-effects' ), value: 'matrix' },
+		{ label: __( 'Hybrid (Both)', 'typing-effects' ), value: 'hybrid' },
+	];
+
+	const ALLOWED_BLOCKS = [
+		'core/paragraph',
+		'core/heading',
+		'core/list',
+		'core/quote',
+		'core/code',
+		'core/preformatted',
+		'core/verse'
+	];
+
+	const TEMPLATE = [
+		['core/paragraph', {
+			placeholder: __( 'Enter text that will animate with typing effects...', 'typing-effects' )
+		}]
+	];
+
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title={ __( 'Animation Settings', 'typing-effects' ) }>
+					<SelectControl
+						label={ __( 'Effect Type', 'typing-effects' ) }
+						value={ effect }
+						options={ effectOptions }
+						onChange={ ( value ) => setAttributes( { effect: value } ) }
+					/>
+					
+					<RangeControl
+						label={ __( 'Typing Speed (ms)', 'typing-effects' ) }
+						value={ typingSpeed }
+						onChange={ ( value ) => setAttributes( { typingSpeed: value } ) }
+						min={ 1 }
+						max={ 500 }
+						step={ 1 }
+						help={ __( 'Lower values = faster typing. Minimum 1ms for ultra-fast effects.', 'typing-effects' ) }
+					/>
+
+					{ ( effect === 'matrix' || effect === 'hybrid' ) && (
+						<RangeControl
+							label={ __( 'Shuffle Speed (ms)', 'typing-effects' ) }
+							value={ shuffleSpeed }
+							onChange={ ( value ) => setAttributes( { shuffleSpeed: value } ) }
+							min={ 1 }
+							max={ 200 }
+							step={ 1 }
+							help={ __( 'Speed of character shuffling before revealing final character.', 'typing-effects' ) }
+						/>
+					) }
+
+					<RangeControl
+						label={ __( 'Start Delay (ms)', 'typing-effects' ) }
+						value={ startDelay }
+						onChange={ ( value ) => setAttributes( { startDelay: value } ) }
+						min={ 0 }
+						max={ 2000 }
+						step={ 100 }
+					/>
+
+					<ToggleControl
+						label={ __( 'Show Cursor', 'typing-effects' ) }
+						checked={ showCursor }
+						onChange={ ( value ) => setAttributes( { showCursor: value } ) }
+					/>
+
+					{ showCursor && (
+						<TextControl
+							label={ __( 'Cursor Character', 'typing-effects' ) }
+							value={ cursorChar }
+							onChange={ ( value ) => setAttributes( { cursorChar: value } ) }
+							placeholder="|"
+						/>
+					) }
+				</PanelBody>
+			</InspectorControls>
+
+			<div { ...blockProps }>
+				<div className="typing-effects-editor">
+					<div className="effect-indicator">
+						<span className="effect-badge">{ effectOptions.find( opt => opt.value === effect )?.label }</span>
+						<span className="speed-indicator">{ typingSpeed }ms</span>
+					</div>
+					<div className="typing-content-wrapper">
+						<InnerBlocks
+							allowedBlocks={ ALLOWED_BLOCKS }
+							template={ TEMPLATE }
+							templateInsertUpdatesSelection={ false }
+						/>
+						{ showCursor && (
+							<span className="typing-cursor-preview">{ cursorChar }</span>
+						) }
+					</div>
+				</div>
+			</div>
+		</>
+	);
+}]]></content>
+  </file>
+  <file path="src/save.js">
+    <content><![CDATA[/**
+ * React hook that is used to mark the block wrapper element.
+ * It provides all the necessary props like the class name.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
+ */
+import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
+
+/**
+ * The save function defines the way in which the different attributes should
+ * be combined into the final markup, which is then serialized by the block
+ * editor into `post_content`.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#save
+ *
+ * @return {Element} Element to render.
+ */
+export default function save( { attributes } ) {
+	const { effect, showCursor, cursorChar } = attributes;
+
+	const blockProps = useBlockProps.save( {
+		className: `effect-${effect}`
+	} );
+
+	return (
+		<div { ...blockProps }>
+			<div className="typing-content">
+				<InnerBlocks.Content />
+			</div>
+			{ showCursor && (
+				<span className="typing-cursor">{ cursorChar }</span>
+			) }
+		</div>
+	);
+}]]></content>
+  </file>
+  <file path="src/style.scss">
+    <content><![CDATA[/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ */
+
+.wp-block-telex-block-typing-effects {
+	position: relative;
+
+	// Inherit theme typography - minimal styling
+	.typing-content {
+		display: inline;
+		margin: 0;
+		
+		// Ensure inner blocks inherit typography
+		p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code {
+			font-family: inherit;
+			font-size: inherit;
+			line-height: inherit;
+			font-weight: inherit;
+			color: inherit;
+			margin: inherit;
+		}
+	}
+
+	.typing-cursor {
+		display: inline-block;
+		animation: typing-blink 1s infinite;
+		font-weight: normal;
+		margin-left: 1px;
+		vertical-align: baseline;
+	}
+
+	// Animation states
+	&.typing-active .typing-cursor {
+		display: inline-block;
+	}
+
+	&.typing-complete .typing-cursor {
+		display: none;
+	}
+
+	// Matrix effect subtle styling
+	&.effect-matrix .typing-content .char-shuffling,
+	&.effect-hybrid .typing-content .char-shuffling {
+		color: currentColor;
+		filter: brightness(1.2);
+		transition: filter 0.1s ease;
+	}
+}
+
+// Cursor blink animation
+@keyframes typing-blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}
+
+// Accessibility: Respect user preferences
+@media (prefers-reduced-motion: reduce) {
+	.wp-block-telex-block-typing-effects {
+		.typing-cursor {
+			animation: none;
+			opacity: 1;
+		}
+
+		.typing-content {
+			opacity: 1 !important;
+		}
+
+		// Show all content immediately
+		&.typing-active .typing-content {
+			opacity: 1 !important;
+		}
+	}
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+	.wp-block-telex-block-typing-effects {
+		&.effect-matrix .char-shuffling,
+		&.effect-hybrid .char-shuffling {
+			filter: none;
+		}
+	}
+}]]></content>
+  </file>
+  <file path="src/editor.scss">
+    <content><![CDATA[/**
+ * The following styles get applied inside the editor only.
+ */
+
+.wp-block-telex-block-typing-effects {
+	.typing-effects-editor {
+		position: relative;
+		border: 1px solid #e0e0e0;
+		border-radius: 4px;
+		background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
+		padding: 16px;
+		margin: 8px 0;
+		transition: all 0.2s ease;
+
+		&:hover {
+			border-color: #007cba;
+			box-shadow: 0 0 0 1px rgba(0, 124, 186, 0.1);
+		}
+
+		.effect-indicator {
+			margin-bottom: 12px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			
+			.effect-badge {
+				display: inline-block;
+				background: #007cba;
+				color: #fff;
+				font-size: 11px;
+				font-weight: 500;
+				padding: 2px 8px;
+				border-radius: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.speed-indicator {
+				display: inline-block;
+				background: #f0f0f0;
+				color: #666;
+				font-size: 10px;
+				font-weight: 500;
+				padding: 2px 6px;
+				border-radius: 8px;
+				font-family: monospace;
+			}
+		}
+
+		.typing-content-wrapper {
+			position: relative;
+			display: flex;
+			align-items: flex-start;
+			flex-wrap: wrap;
+			gap: 0;
+
+			// Ensure InnerBlocks inherits theme styles
+			.block-editor-inner-blocks {
+				flex: 1;
+				min-width: 0;
+			}
+
+			// Style the inner blocks to look natural
+			.wp-block {
+				margin: 0;
+				
+				&:not(:last-child) {
+					margin-bottom: 0.5em;
+				}
+			}
+
+			.typing-cursor-preview {
+				display: inline-block;
+				color: #007cba;
+				font-weight: 500;
+				animation: editor-cursor-blink 1.2s infinite;
+				margin-left: 2px;
+				vertical-align: baseline;
+				line-height: inherit;
+			}
+		}
+	}
+
+	// Different visual cues for different effects
+	&.effect-matrix .typing-effects-editor {
+		background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+		border-color: #4caf50;
+
+		.effect-badge {
+			background: #4caf50 !important;
+		}
+
+		.typing-cursor-preview {
+			color: #4caf50;
+		}
+	}
+
+	&.effect-hybrid .typing-effects-editor {
+		background: linear-gradient(135deg, #fff8f0 0%, #fff0e6 100%);
+		border-color: #ff9800;
+
+		.effect-badge {
+			background: #ff9800 !important;
+		}
+
+		.typing-cursor-preview {
+			color: #ff9800;
+		}
+	}
+}
+
+// Editor cursor blink
+@keyframes editor-cursor-blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0.3; }
+}
+
+// Focus states for better accessibility
+.wp-block-telex-block-typing-effects.is-selected {
+	.typing-effects-editor {
+		border-color: #007cba;
+		box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2);
+	}
+}
+
+// Ensure good contrast in dark themes
+.is-dark-theme .wp-block-telex-block-typing-effects {
+	.typing-effects-editor {
+		background: linear-gradient(135deg, #2c2c2c 0%, #383838 100%);
+		border-color: #555;
+		color: #fff;
+
+		&:hover {
+			border-color: #00a0d2;
+		}
+
+		.speed-indicator {
+			background: #444;
+			color: #ccc;
+		}
+	}
+}]]></content>
+  </file>
+  <file path="src/view.js">
+    <content><![CDATA[/**
+ * Typing Effects Frontend JavaScript
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+	const typingBlocks = document.querySelectorAll('.wp-block-telex-block-typing-effects');
+	
+	typingBlocks.forEach(initializeTypingEffect);
+});
+
+function initializeTypingEffect(block) {
+	const contentContainer = block.querySelector('.typing-content');
+	const cursor = block.querySelector('.typing-cursor');
+	const config = JSON.parse(block.dataset.config || '{}');
+	
+	if (!contentContainer) return;
+
+	// Get all text content from inner elements
+	const textElements = contentContainer.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code');
+	if (textElements.length === 0) return;
+
+	const {
+		effect = 'typewriter',
+		typingSpeed = 100,
+		shuffleSpeed = 50,
+		startDelay = 500,
+		showCursor = true
+	} = config;
+
+	// Store original content
+	const originalElements = Array.from(textElements).map(el => ({
+		element: el,
+		originalHTML: el.innerHTML,
+		originalText: el.textContent || el.innerText || ''
+	}));
+
+	// Clear content initially
+	originalElements.forEach(({ element }) => {
+		element.innerHTML = '';
+	});
+
+	block.classList.add('typing-active');
+
+	// Show cursor if enabled
+	if (showCursor && cursor) {
+		cursor.style.display = 'inline-block';
+	}
+
+	setTimeout(() => {
+		switch (effect) {
+			case 'typewriter':
+				startTypewriterEffect(originalElements, typingSpeed, onComplete);
+				break;
+			case 'matrix':
+				startMatrixEffect(originalElements, typingSpeed, shuffleSpeed, onComplete);
+				break;
+			case 'hybrid':
+				startHybridEffect(originalElements, typingSpeed, shuffleSpeed, onComplete);
+				break;
+		}
+	}, startDelay);
+
+	function onComplete() {
+		block.classList.remove('typing-active');
+		block.classList.add('typing-complete');
+		if (cursor && showCursor) {
+			cursor.style.display = 'none';
+		}
+	}
+}
+
+function startTypewriterEffect(elements, speed, callback) {
+	let currentElementIndex = 0;
+	let currentCharIndex = 0;
+	
+	function typeChar() {
+		if (currentElementIndex >= elements.length) {
+			callback();
+			return;
+		}
+
+		const currentElement = elements[currentElementIndex];
+		const text = currentElement.originalText;
+
+		if (currentCharIndex < text.length) {
+			currentElement.element.textContent += text.charAt(currentCharIndex);
+			currentCharIndex++;
+			setTimeout(typeChar, speed);
+		} else {
+			// Move to next element
+			currentElementIndex++;
+			currentCharIndex = 0;
+			setTimeout(typeChar, speed * 2); // Slight pause between elements
+		}
+	}
+	
+	typeChar();
+}
+
+function startMatrixEffect(elements, typingSpeed, shuffleSpeed, callback) {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+	let currentElementIndex = 0;
+	let currentCharIndex = 0;
+	
+	function revealChar() {
+		if (currentElementIndex >= elements.length) {
+			callback();
+			return;
+		}
+
+		const currentElement = elements[currentElementIndex];
+		const text = currentElement.originalText;
+
+		if (currentCharIndex >= text.length) {
+			// Move to next element
+			currentElementIndex++;
+			currentCharIndex = 0;
+			setTimeout(revealChar, typingSpeed * 2);
+			return;
+		}
+		
+		const targetChar = text.charAt(currentCharIndex);
+		let shuffleCount = 0;
+		const maxShuffles = Math.floor(Math.random() * 10) + 5;
+		
+		function shuffle() {
+			if (shuffleCount < maxShuffles && targetChar !== ' ') {
+				const randomChar = chars.charAt(Math.floor(Math.random() * chars.length));
+				const currentText = currentElement.element.textContent;
+				currentElement.element.textContent = currentText.substring(0, currentCharIndex) + randomChar;
+				shuffleCount++;
+				setTimeout(shuffle, shuffleSpeed);
+			} else {
+				const currentText = currentElement.element.textContent;
+				currentElement.element.textContent = currentText.substring(0, currentCharIndex) + targetChar;
+				currentCharIndex++;
+				setTimeout(revealChar, typingSpeed);
+			}
+		}
+		
+		if (targetChar === ' ') {
+			currentElement.element.textContent += ' ';
+			currentCharIndex++;
+			setTimeout(revealChar, typingSpeed / 2);
+		} else {
+			shuffle();
+		}
+	}
+	
+	revealChar();
+}
+
+function startHybridEffect(elements, typingSpeed, shuffleSpeed, callback) {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	let currentElementIndex = 0;
+	let currentCharIndex = 0;
+	
+	function typeWithShuffle() {
+		if (currentElementIndex >= elements.length) {
+			callback();
+			return;
+		}
+
+		const currentElement = elements[currentElementIndex];
+		const text = currentElement.originalText;
+
+		if (currentCharIndex >= text.length) {
+			// Move to next element
+			currentElementIndex++;
+			currentCharIndex = 0;
+			setTimeout(typeWithShuffle, typingSpeed * 2);
+			return;
+		}
+		
+		const targetChar = text.charAt(currentCharIndex);
+		
+		if (targetChar === ' ') {
+			currentElement.element.textContent += ' ';
+			currentCharIndex++;
+			setTimeout(typeWithShuffle, typingSpeed / 2);
+			return;
+		}
+		
+		// Shuffle phase
+		let shuffleCount = 0;
+		const maxShuffles = Math.floor(Math.random() * 5) + 2;
+		
+		function shuffle() {
+			if (shuffleCount < maxShuffles) {
+				const randomChar = chars.charAt(Math.floor(Math.random() * chars.length));
+				const currentText = currentElement.element.textContent;
+				currentElement.element.textContent = currentText + randomChar;
+				
+				setTimeout(() => {
+					currentElement.element.textContent = currentText;
+					shuffleCount++;
+					setTimeout(shuffle, shuffleSpeed);
+				}, shuffleSpeed);
+			} else {
+				// Reveal the actual character
+				currentElement.element.textContent += targetChar;
+				currentCharIndex++;
+				setTimeout(typeWithShuffle, typingSpeed);
+			}
+		}
+		
+		shuffle();
+	}
+	
+	typeWithShuffle();
+}]]></content>
+  </file>
+  <file path="src/render.php">
+    <content><![CDATA[<?php
+/**
+ * @see https://github.com/WordPress/gutenberg/blob/trunk/docs/reference-guides/block-api/block-metadata.md#render
+ */
+
+$effect = $attributes['effect'] ?? 'typewriter';
+$typing_speed = $attributes['typingSpeed'] ?? 100;
+$shuffle_speed = $attributes['shuffleSpeed'] ?? 50;
+$start_delay = $attributes['startDelay'] ?? 500;
+$show_cursor = $attributes['showCursor'] ?? true;
+$cursor_char = $attributes['cursorChar'] ?? '|';
+
+$config = wp_json_encode( array(
+	'effect' => $effect,
+	'typingSpeed' => $typing_speed,
+	'shuffleSpeed' => $shuffle_speed,
+	'startDelay' => $start_delay,
+	'showCursor' => $show_cursor,
+	'cursorChar' => $cursor_char,
+) );
+
+$wrapper_attributes = get_block_wrapper_attributes( array(
+	'class' => 'effect-' . $effect,
+	'data-config' => $config,
+) );
+?>
+
+<div <?php echo $wrapper_attributes; ?>>
+	<div class="typing-content">
+		<?php echo $content; ?>
+	</div>
+	<?php if ( $show_cursor ) : ?>
+		<span class="typing-cursor"><?php echo esc_html( $cursor_char ); ?></span>
+	<?php endif; ?>
+</div>]]></content>
+  </file>
+  <file path="package.json">
+    <content><![CDATA[
+{
+	"name": "typing-effects",
+	"version": "0.1.0",
+	"description": "Create engaging typing animations with typewriter, Matrix-style, and hybrid effects.",
+	"author": "WordPress Telex",
+	"license": "GPL-2.0-or-later",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "wp-scripts build",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip",
+		"start": "wp-scripts start"
+	},
+    "devDependencies": {
+        "@wordpress/scripts": "^30.15.0"
+	}
+}
+]]></content>
+  </file>
+</artefact>

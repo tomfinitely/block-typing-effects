@@ -1,0 +1,84 @@
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ */
+
+.wp-block-telex-block-typing-effects {
+	position: relative;
+
+	// Inherit theme typography - minimal styling
+	.typing-content {
+		display: inline;
+		margin: 0;
+		
+		// Ensure inner blocks inherit typography
+		p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code {
+			font-family: inherit;
+			font-size: inherit;
+			line-height: inherit;
+			font-weight: inherit;
+			color: inherit;
+			margin: inherit;
+		}
+	}
+
+	.typing-cursor {
+		display: inline-block;
+		animation: typing-blink 1s infinite;
+		font-weight: normal;
+		margin-left: 1px;
+		vertical-align: baseline;
+	}
+
+	// Animation states
+	&.typing-active .typing-cursor {
+		display: inline-block;
+	}
+
+	&.typing-complete .typing-cursor {
+		display: none;
+	}
+
+	// Matrix effect subtle styling
+	&.effect-matrix .typing-content .char-shuffling,
+	&.effect-hybrid .typing-content .char-shuffling {
+		color: currentColor;
+		filter: brightness(1.2);
+		transition: filter 0.1s ease;
+	}
+}
+
+// Cursor blink animation
+@keyframes typing-blink {
+	0%, 50% { opacity: 1; }
+	51%, 100% { opacity: 0; }
+}
+
+// Accessibility: Respect user preferences
+@media (prefers-reduced-motion: reduce) {
+	.wp-block-telex-block-typing-effects {
+		.typing-cursor {
+			animation: none;
+			opacity: 1;
+		}
+
+		.typing-content {
+			opacity: 1 !important;
+		}
+
+		// Show all content immediately
+		&.typing-active .typing-content {
+			opacity: 1 !important;
+		}
+	}
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+	.wp-block-telex-block-typing-effects {
+		&.effect-matrix .char-shuffling,
+		&.effect-hybrid .char-shuffling {
+			filter: none;
+		}
+	}
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "telex/block-typing-effects",
+  "version": "0.1.0",
+  "title": "Typing Effects",
+  "category": "design",
+  "icon": "editor-code",
+  "description": "Add engaging typing animations with typewriter, Matrix-style, and hybrid effects to your content blocks.",
+  "example": {
+    "attributes": {
+      "effect": "typewriter",
+      "typingSpeed": 50
+    },
+    "innerBlocks": [
+      {
+        "name": "core/paragraph",
+        "attributes": {
+          "content": "Hello World! This text will animate with typing effects."
+        }
+      }
+    ]
+  },
+  "attributes": {
+    "effect": {
+      "type": "string",
+      "default": "typewriter",
+      "enum": [
+        "typewriter",
+        "matrix",
+        "hybrid"
+      ]
+    },
+    "typingSpeed": {
+      "type": "number",
+      "default": 50
+    },
+    "shuffleSpeed": {
+      "type": "number",
+      "default": 30
+    },
+    "startDelay": {
+      "type": "number",
+      "default": 500
+    },
+    "showCursor": {
+      "type": "boolean",
+      "default": true
+    },
+    "cursorChar": {
+      "type": "string",
+      "default": "|"
+    }
+  },
+  "supports": {
+    "html": false,
+    "color": {
+      "text": true,
+      "background": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true,
+      "fontFamily": true,
+      "fontStyle": true,
+      "fontWeight": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "textdomain": "typing-effects",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "viewScript": "file:./view.js",
+  "render": "file:./render.php"
+}
