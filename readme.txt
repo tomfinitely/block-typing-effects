@@ -1,7 +1,7 @@
 
 === Typing Effects ===
 
-Contributors:      WordPress Telex
+WordPress Telex, Tom Finley
 Tags:              block, typing, animation, typewriter, matrix, effects
 Tested up to:      6.8
 Stable tag:        0.2.0
