@@ -5,11 +5,14 @@
 
 .wp-block-telex-block-typing-effects {
 	position: relative;
+	min-height: 1.2em; // Reserve minimum space to prevent layout shift
 
 	// Inherit theme typography - minimal styling
 	.typing-content {
-		display: inline;
+		display: inline-block;
 		margin: 0;
+		position: relative;
+		min-height: 1.2em; // Reserve minimum space
 		
 		// Ensure inner blocks inherit typography
 		p, h1, h2, h3, h4, h5, h6, li, blockquote, pre, code {
@@ -19,15 +22,36 @@
 			font-weight: inherit;
 			color: inherit;
 			margin: inherit;
+			display: inline; // Keep inline to prevent layout shifts
+		}
+	}
+
+	// Initial state - content is hidden until scroll trigger
+	&:not(.typing-ready) {
+		.typing-content {
+			opacity: 0.3; // Subtle indication that content will appear
+		}
+	}
+
+	// Ready to animate state
+	&.typing-ready {
+		.typing-content {
+			opacity: 1;
 		}
 	}
 
 	.typing-cursor {
-		display: inline-block;
+		display: none; // Hidden by default
 		animation: typing-blink 1s infinite;
 		font-weight: normal;
 		margin-left: 1px;
 		vertical-align: baseline;
+		position: absolute;
+		top: 0;
+		left: 0;
+		pointer-events: none; // Prevent cursor from interfering with interactions
+		filter: brightness(0.6); // Make cursor lighter than the text
+		opacity: 0.8; // Additional transparency for subtle effect
 	}
 
 	// Animation states

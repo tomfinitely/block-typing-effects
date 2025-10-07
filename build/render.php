@@ -8,7 +8,7 @@ $typing_speed = $attributes['typingSpeed'] ?? 100;
 $shuffle_speed = $attributes['shuffleSpeed'] ?? 50;
 $start_delay = $attributes['startDelay'] ?? 500;
 $show_cursor = $attributes['showCursor'] ?? true;
-$cursor_char = $attributes['cursorChar'] ?? '|';
+$cursor_char = $attributes['cursorChar'] ?? '>';
 
 $config = wp_json_encode( array(
 	'effect' => $effect,
@@ -29,7 +29,7 @@ $wrapper_attributes = get_block_wrapper_attributes( array(
 	<div class="typing-content">
 		<?php echo $content; ?>
 	</div>
-	<?php if ( $show_cursor ) : ?>
+	<?php if ( $show_cursor && $effect === 'hybrid' ) : ?>
 		<span class="typing-cursor"><?php echo esc_html( $cursor_char ); ?></span>
 	<?php endif; ?>
 </div>

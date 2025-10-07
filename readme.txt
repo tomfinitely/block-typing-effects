@@ -4,7 +4,7 @@
 Contributors:      WordPress Telex
 Tags:              block, typing, animation, typewriter, matrix, effects
 Tested up to:      6.8
-Stable tag:        0.1.0
+Stable tag:        0.2.0
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,15 @@ The block supports rich text formatting including bold, italic, links, and other
 3. Matrix shuffle effect demonstration
 
 == Changelog ==
+
+= 0.2.0 =
+* Scroll-triggered animations using Intersection Observer
+* Unix-style cursor (>) for hybrid effect
+* Removed cursors from typewriter and matrix effects
+* Lighter cursor color with brightness filter
+* Lazy loading support
+* Fixed layout shift issues
+* Fixed cursor positioning bugs
 
 = 0.1.0 =
 * Initial release with typewriter, Matrix shuffle, and hybrid effects
